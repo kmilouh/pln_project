@@ -25,11 +25,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="datastore.py" />
+    <Compile Include="drive_helpers.py" />
+    <Compile Include="file_helpers.py" />
+    <Compile Include="log_helper.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="parsedata.py" />
     <Compile Include="webscraper.py" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="requirements - Copy.txt" />
     <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
