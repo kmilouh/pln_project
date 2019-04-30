@@ -29,7 +29,7 @@ logger.info("Start App")
 # FAQ urls in different languages
 # Currently support: ES, EN
 urls = {'es': 'https://help.twitter.com/es',
-       #'en': 'https://help.twitter.com/'
+        'en': 'https://help.twitter.com/'
        }
 languages = { 'es':'spanish', 'en': 'english'}
 # Timeout for request
@@ -112,4 +112,8 @@ for language, url in urls.items():
 #print(main_subsection_list)
 with open('es_data.json', 'a') as the_file:
     str_data = str(main_subsection_list[0]).replace("\\","")
+    the_file.write(str_data)
+
+with open('en_data.json', 'a') as the_file:
+    str_data = str(main_subsection_list[1]).replace("\\","")
     the_file.write(str_data)
