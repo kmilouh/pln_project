@@ -20,7 +20,7 @@ class LogHelper(object):
             with open(filename,"a+") as f:
                 print('Creating Log File.')        
 
-        logging.config.fileConfig('logging.conf', defaults={'logfilename': filename})  
+        logging.config.fileConfig('./logging.conf', defaults={'logfilename': filename})  
     
     def getLogger(self, name):
         return logging.getLogger(name)

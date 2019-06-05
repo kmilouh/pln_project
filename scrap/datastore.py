@@ -5,13 +5,14 @@ class SubSecction(object):
     SubSecction class.
     This class store the data from the twitter help.
     '''
-    def __init__(self, title, url, data):
+    def __init__(self, title, url, data, id):
         '''
         Constructor. 
         '''
         self.title = title
         self.url = url
         self.data = data
+        self.id = id
         self.subSecction = []
 
     def __str__(self):
@@ -25,9 +26,9 @@ class SubSecction(object):
             
         buffer = buffer.strip().strip("'").strip(",")
         
-        return "{ 'title' : '" + self.title + "' , 'url': '" + self.url + "' , 'data': '" + self.data + "' , 'subSecction': [" + str(buffer) + "]  }".replace("\\"," ")
+        return "{ 'title' : '" + self.title + "' , 'url': '" + self.url +  "' , 'id': '" + str(self.id) +   "' , 'data': '" + self.data + "' , 'subSecction': [" + str(buffer) + "]  }".replace("\\"," ")
 
-    def addSubSecction(self, subSecction=None, title=None, url=None, data=None):
+    def addSubSecction(self, subSecction=None, title=None, url=None, data=None, id=0):
         '''
         Add SubSection
         '''
@@ -37,7 +38,7 @@ class SubSecction(object):
         if(subSecction != None):
             self.subSecction.append(subSecction)
         else:
-            sect = SubSecction(title, url, data)
+            sect = SubSecction(title, url, data,id)
             self.subSecction.append(sect)
     
 
