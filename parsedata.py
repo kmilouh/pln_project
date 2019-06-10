@@ -1,18 +1,19 @@
+# --------------------------------------------------------------------------------
+# Librerías
 import nltk
 import string
 from nltk.tokenize import word_tokenize
 from log_helper import LogHelper
 
-
+# --------------------------------------------------------------------------------
+# Clase que parsea el texto con nltk haciendolo usable para otras tareas
 class Tokenizer(object):
     def __init__(self, logger, language, only_words=True):
         self.language = language
         self.logger = logger
         self.only_words = only_words
-        # In some environments if don't put these lines maybe the library throw
-        # an Exception
+        # Necesario en algunos entornos para no crear una excepción
         nltk.data.load('nltk:tokenizers/punkt/spanish.pickle')
-        #nltk.data.load('tokenizers/punkt/spanish.pickle')
 
     def tokenize(self, source):
         try:

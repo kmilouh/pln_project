@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""This is Query for Twitter FAQ"""
 
+# --------------------------------------------------------------------------------
+# Librerías
 import nltk
 import math
 from nltk.tokenize import RegexpTokenizer
@@ -20,19 +21,22 @@ from os import system, name
 import pickle
 from bottle import route, response, static_file, run, debug
 from pathlib import Path
-
 import nltk
+
+# --------------------------------------------------------------------------------
 nltk.download("stopwords")
 nltk.download('punkt')
 nltk.data.load('nltk:tokenizers/punkt/spanish.pickle')
 
-# Logs
+# --------------------------------------------------------------------------------
+# Archivos de registro
 loghelper = LogHelper()
 logger = loghelper.getLogger("default")
 logger.info("Start App")
 
-model =[]
-
+# --------------------------------------------------------------------------------
+# Cargamos el modelo de español e inglés que vamos a usar, si es la primera vez
+# que se ejecuta se crea automáticamente
 if os.path.exists('query_model_es.bin'):
     query_es = Query("es_data.json",logger, data_file='query_model_es.bin', load_model=True)
 else:
@@ -44,15 +48,16 @@ else:
     query_en = Query("en_data.json",logger,language='english', data_file='query_model_en.bin', load_model=False)
     query_en.save('query_model_en.bin')
 
-
+model = []
 model.append(query_es)
 model.append(query_en)
 
 info = [{"name": "Modelo en Español", "value": "Modelo en Español, datos..."},
         {"name": "Modelo en Ingles", "value": "Modelo en Ingles, datos Eng..."},
-         ]
+        ]
 
-
+# --------------------------------------------------------------------------------
+# Función usada para crear un servidor local y ejecutar la aplicación diseñada
 def runServer(httpPort=9000):
 
     debug(True)
@@ -95,4 +100,5 @@ def runServer(httpPort=9000):
 
     run(host='localhost', port=httpPort)
 
+# --------------------------------------------------------------------------------
 runServer()

@@ -1,3 +1,5 @@
+# --------------------------------------------------------------------------------
+# Librerías
 import nltk
 import math
 from nltk.tokenize import RegexpTokenizer
@@ -13,82 +15,116 @@ import os
 from os import system, name
 import pickle
 
-
+# --------------------------------------------------------------------------------
+# Clase que nos permite obtener la respuesta a la consulta deseada
 class Query:
-
     def __init__(self, str_json_file, logger: LogHelper, language='spanish', data_file='query_model.bin', load_model=False):
         self.logger = logger
 
+        # True si vamos a cargar y usar un modelo creado
         if load_model:
             self.load(data_file)
             return
 
+        # Diferentes configuraciones en función del lenguaje a usar
         if language == 'spanish':
             self.stopWords = stopwords.words('spanish')
             self.stemmer = SnowballStemmer('spanish')
         else:
-            self.stemmer = PorterStemmer()
             self.stopWords = stopwords.words('english')
+            self.stemmer = PorterStemmer()
 
+        # Cargamos el tokenizador a usar
         self.tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
 
+        # Iterador que nos servirá para recorrer el archivo JSON
+        self.iterator = DataIterator(str_json_file) 
 
-        self.iterator = DataIterator(str_json_file) # Data.
-        self.vectors = {}  # tf-idf vectors for all documents
-        self.df = Counter()  # storage for document frequency
-        self.tfs = {}  # permanent storage for tfs of all tokens in all documents
-        self.lengths = Counter()  # used for calculating lengths of documents
-        self.postings_list = {}  # posting list storage for each token in the corpus
+        # Vector TF-IDF para todos los documentos
+        self.vectors = {} 
+
+        # Contador de frecuencia para el documento
+        self.df = Counter() 
+
+        # Almacenamiento permanente en todos los documentos para todos
+        #  los TF-IDF de todos los tokens 
+        self.tfs = {} 
+
+        # Se usara para obtener la longitud de los documentos
+        self.lengths = Counter()
+
+        # Lista de publicaciones para cada token del corpus del escrito
+        self.postings_list = {} 
+
         self.st_tokens = []
+
         for _id, _url, doc in self.iterator.data:
-            doc = doc.lower()  # given code for reading files and converting the case
-            tokens = self.tokenizer.tokenize(doc)  # tokenizing each document
-            # removing stopwords and performing stemming
+            # Convertimos a minúsculas el documento leido
+            doc = doc.lower() 
+
+            # Obtenemos los tokens de dicho documento
+            tokens = self.tokenizer.tokenize(doc)  
+
+            # Eliminamos las "stopwords" y derivaciones
             tokens = [self.stemmer.stem(token)
                       for token in tokens if token not in self.stopWords]
+
             tf = Counter(tokens)
             self.df += Counter(list(set(tokens)))
-            # making a copy of tf into tfs for that filename
-            self.tfs[_id] = tf.copy()
-            tf.clear()  # clearing tf so that the next document will have an empty tf
 
-        # loop for calculating tf-idf vectors and lengths of documents
+            # Hacemos una copia del TF-IDF en el almacenador permanente
+            # de TF-IDF para este archivo
+            self.tfs[_id] = tf.copy()
+
+            # Limpiamos los TF-IDF para el siguiente documento
+            tf.clear()
+
+        # Bucle para calcular los vectores TF-IDF y sus longitudes de los documentos
         for id in self.tfs:
-            # initializing the tf-idf vector for each doc
+            # Inicializamos el vector TF-IDF para cada documento
             self.vectors[id] = Counter()
+
             length = 0
             for token in self.tfs[id]:
-                # get_weigth calculates the weight of a token in a doc without normalization
+                # Calculamos los pesos de un token en el documento sin normalización
                 weight = self.get_weigth(id, token)
-               # this is the weight of a token in a file
                 self.vectors[id][token] = weight
-                length += weight**2  # calculating length for normalizing later
+
+                # Guardarmos la longitud para normalizar el peso posteriormente
+                length += weight**2 
+
             self.lengths[id] = math.sqrt(length)
 
-        # loop for normalizing the weights
+        # Bucle para normalizar los pesos
         for id in self.vectors:
             for token in self.vectors[id]:
-                self.vectors[id][token] = self.vectors[id][token] / \
-                    self.lengths[id]  # dividing weights by the document's length
+                # Dividimos los pesos por la longitud del documento
+                self.vectors[id][token] = self.vectors[id][token] / self.lengths[id]
+
                 if token not in self.postings_list:
                     self.postings_list[token] = Counter()
-                # copying the normalized value into the posting list
+                
+                # Finalmente, copiamos el valor normalizado en la lista de publicaciones
                 self.postings_list[token][id] = self.vectors[id][token]
 
-    # returns the weight of a token in a document without normalizing
+    # Este método, devuelve el peso de un token en un documento sin normalización
     def get_weigth(self, id, token):
         idf = self.get_idf(token)
-        # tfs has the logs of term frequencies of all docs in a multi-level dict
+
+        # TFS contiene un archivo de registro de las frecuencias de los términos en todos 
+        # los doscumentos en un diccionario multi nivel
         return (1+log10(self.tfs[id][token]))*idf
 
+    # Método que devuelve IDF
     def get_idf(self, token):
         if self.df[token] == 0:
             return -1
-        # len(tfs) returns no. of docs; df[token] returns the token's document frequency
+
+        # len(tfs) devuelve el número de documentos
+        # df[token] devuelve la frecuencia del token en el documento
         return log10(len(self.tfs)/self.df[token])
 
-
-
+    # Método para cargar el modelo
     def load(self, filename):
         try:
             with open(filename, "rb") as file:
@@ -107,10 +143,9 @@ class Query:
         except Exception as error:
             self.logger.error("Error Load Model {0}".format(str(error)))
 
+    # Método para guardar el modelo
     def save(self, filename):
         try:
-            # self.logger.info("ModelBase {0} save to {1} ".format(
-            #    self.message, filename))
             store_memory = {}
             store_memory["stopWords"] = self.stopWords
             store_memory["stemmer"] = self.stemmer
@@ -128,73 +163,93 @@ class Query:
         except Exception as error:
             self.logger.error("Error Save Model {0}".format(str(error)))
 
-    def query(self, qstring):  # function that returns the best match for a query
+    # Método que devuelve la respuesta con la mejor concordancia a la consulta aplicada
+    def query(self, qstring): 
         self.logger.info(" Query {0}".format(qstring))
-        qstring = qstring.lower()  # converting the words to lower case
+
+        # Convertimos las palabras de la consulta a minúsculas
+        qstring = qstring.lower()
         qtf = {}
         qlength = 0
         flag = 0
         loc_docs = {}
         tenth = {}
-        # initializing a counter for calculating cosine similarity b/w a token and a doc
+
+        # Inicializamos el contador para calcular el coseno de b/w de un token en el documento
         cos_sims = Counter()
         for token in qstring.split():
             if token in self.stopWords:
                 continue
-            # stemming the token using PorterStemmer
+
+            # Obtenemos la raiz de la palabra
             token = self.stemmer.stem(token)
-            # if the token doesn't exist in vocabulary,ignore it (this includes stopwords removal)
+
+            # Si no existe en el vocabulario, la ignoramos y continuamos
             if token not in self.postings_list:
                 continue
-            # if a token has idf = 0, all values in its postings list are zero. max 10 will be chosen randomly
+            
+            # Si el token tiene idf = 0 , todos los valores en sus listas de 
+            # publicaciones son cero, en caso contrario como máximo 50 son 
+            # elegidas arbitrariamente
             if self.get_idf(token) == 0:
-                # to avoid that, we store all docs
+
+                # para conseguirlo, almacenamos todos los documentos
                 loc_docs[token], weights = zip(
                     *self.postings_list[token].most_common())
             else:
-                # taking top 50 in postings list
+
+                # Cogemos 50 listas de publicaciones
                 loc_docs[token], weights = zip(
                     *self.postings_list[token].most_common(50))
-            tenth[token] = weights[-1]  # storing the upper bound of each token
+
+            # Guardamos el límite superior de cada token
+            tenth[token] = weights[-1]  
             if flag == 1:
-                # commondocs keeps track of docs that have all tokens
+                
+                # Nos mantiene el rastro de los documentos que tienen tokens
                 commondocs = set(loc_docs[token]) & commondocs
             else:
                 commondocs = set(loc_docs[token])
                 flag = 1
-            # updating term freq of token in query
+
+            # Actualizamos la frecuencia de cada término en la consulta
             qtf[token] = 1+log10(qstring.count(token))
-            # calculating length for normalizing the query tf later
+
+            # Calculamos la longitud para normalizar después
             qlength += qtf[token]**2
+
         qlength = sqrt(qlength)
         for doc in self.vectors:
             cos_sim = 0
             for token in qtf:
                 if doc in loc_docs[token]:
-                    # calculate actual score if document is in top 10
+
+                    # Calculamos la puntuación actual si el documento está en el top 10
                     cos_sim = cos_sim + (qtf[token] / qlength) * \
                         self.postings_list[token][doc]
                 else:
-                    # otherwise, calculate its upper bound score
+
+                    # En otro caso, calculamos la puntuación del límite superior
                     cos_sim = cos_sim + (qtf[token] / qlength) * tenth[token]
+
             cos_sims[doc] = cos_sim
-        max = cos_sims.most_common(50)  # seeing which doc has the max value
+
+        # Vemos que documento tiene la puntuación mayor
+        max = cos_sims.most_common(50)
         ans, wght = zip(*max)
         try:
             if ans[0] in commondocs:
+
+                # Si el documento tiene puntuación, la devolvemos
                 answer = []
-                # if doc has actual score, return score
                 answer.append((self.iterator.ids[ans[0]], ans[0], wght[0], self.iterator.title[ans[0]]))
                 if len(ans) > 5:
                     for i in range(1, 5):
                         if ans[i] in commondocs:
                             answer.append((self.iterator.ids[ans[i]],ans[i], wght[i],self.iterator.title[ans[i]]))
-
                 return answer
             else:
-
-                # if upperbound score is greater, return fetch more
-                # return [("fetch more", 0)]
+                
                 answer = []
                 answer.append((self.iterator.ids[ans[0]],ans[0], wght[0],self.iterator.title[ans[0]]))
                 if len(ans) > 5:
@@ -202,14 +257,6 @@ class Query:
                         answer.append((self.iterator.ids[ans[i]],ans[i], wght[i],self.iterator.title[ans[i]]))
                 return answer
 
-        except UnboundLocalError:  # if none of the tokens are in vocabulary, return none
+        # Si ningún token está en el vocabulario devolvemos None
+        except UnboundLocalError: 
             return [("None", 0)]
-
-
-
-#query = Query("es_data.json", data_file='query_model_es.bin', load_model=True,)
-## query.save('query_model_es.bin')
-#
-#
-#print(query.query("cosas judiciales"))
-#print(query.query("requerimientos para información"))

@@ -1,12 +1,16 @@
+# --------------------------------------------------------------------------------
+# Librerías
 import logging
 import logging.config
 import datetime
 import os
 
+# --------------------------------------------------------------------------------
+# Clase que crea un archivo de registro para guardar datos necesarios en caso de 
+# que algo falle y pueda ser depurado de una manera más sencilla
 class LogHelper(object):
     def __init__(self):
         now = datetime.datetime.now()
-
 
         if not os.path.exists("./logs/"):
             os.makedirs("./logs/")

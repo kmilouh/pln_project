@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""This is the web scraper for Twitter FAQ"""
 
+# --------------------------------------------------------------------------------
+# Librerías
 from bs4 import BeautifulSoup
 import requests
 import time
@@ -13,83 +14,98 @@ from datastore import SubSecction
 from log_helper import LogHelper
 from parsedata import Tokenizer
 from collections import namedtuple
-
-
 import nltk
-# First download nltk punkt.
+
+# --------------------------------------------------------------------------------
+# Descargamos nltk punkt
 nltk.download('punkt')
 
-
-# Logs
+# --------------------------------------------------------------------------------
+# Archivos de registro
 loghelper = LogHelper()
 logger = loghelper.getLogger("default")
 logger.info("Start App")
 
+# --------------------------------------------------------------------------------
+# FAQ urls en diferentes lenguajes, actualmente admitidos: ES, EN
 
-
-# FAQ urls in different languages
-# Currently support: ES, EN
 urls = {#'es': 'https://help.twitter.com/es',
         'en': 'https://help.twitter.com/'
        }
+
 languages = { 'es':'spanish', 'en': 'english'}
-# Timeout for request
+
+# --------------------------------------------------------------------------------
+# Tiempo limite para las solicitudes
 CONST_TIMEOUT = 10
-# Time between request
+
+# --------------------------------------------------------------------------------
+# Tiempo entre solicitudes
 CONST_REQUEST_TIME_DELAY = 0
 
-# Main subsection list
+# --------------------------------------------------------------------------------
+# Lista principal de las subsecciones
 main_subsection_list = []
 
-
-#URL dictionary
+# --------------------------------------------------------------------------------
+# Diccionario URL
 url_dictionary = {}
 
-
-
+# --------------------------------------------------------------------------------
 for language, url in urls.items():
-    # Create Main Language Subsection.
+
+    # Creación del archivo de registro
     logger.info("Create Language Subsection {0!r} with url {1!r}".format(language,url))
     sec = SubSecction('FAQ language {0}'.format(language), url, '', -1)
-    # Get the Main Help twitter in the correspond language.
+
+    # Cogemos las ayudas principales en el correspondiente lenguaje
     response = requests.get(url, timeout=CONST_TIMEOUT)
-    # create tokenizer for the selected language.
+
+    # Creamos el tokenizador para el lenguaje seleccionado
     tokenizer = Tokenizer(logger,languages[language])
     
+    # Contenido HTML para analizar
     content = BeautifulSoup(response.content, "html.parser")
 
+    # En esta función trataremos de almacenar en diferentes secciones el contenido 
+    # de ayuda de la página, para ello tendremos que explorar todas las posibilidades
+    # que nos proporciona la página HTML en donde se puede encontrar dicho contenido
+    # cómo puede ser: hp01__content, hp01__topic-list-item, ap04, twtr-component-space--md
+    # Así pues el JSON generado, tendrá un título, un ID y contenido para quedar mejor 
+    # estructurado a la hora poder trabajar con él
     id = 0
-    
-
     for tweet in content.findAll('div', attrs={"class": "hp01__content"}):
+
         title = tweet.p.text.strip()
         logger.info("Create Subsection {0!r}".format(title))
         mainSecction_item = SubSecction(title, url, tweet.p.text.strip(), id)
+
         id = id + 1
         pid = id
         for text in tweet.findAll('li', attrs={"class", "hp01__topic-list-item"}):
+
             sub_content_secction_title = text.a.text.strip()
             logger.info("Create Subsection {0!r}".format(sub_content_secction_title))
+
             if text.a.get('href') in url_dictionary:
                 pid = url_dictionary[text.a.get('href')]
                 continue
             else:
                 url_dictionary[text.a.get('href')] = id
+
             sub_content_secction = SubSecction(sub_content_secction_title,text.a.get('href'), '', pid)
 
             sub_response = requests.get(text.a.get('href'), timeout=CONST_TIMEOUT)
             sub_content = BeautifulSoup(sub_response.content, "html.parser")
 
-
             for sub_text in sub_content.findAll('script', attrs={"type": "application/ld+json"}):
+
                 y = anyjson.deserialize(sub_text.text.strip().replace('@', ''))
                 if (y['type'] == 'CollectionPage'):
+
                     item_list = y['mainEntity']['itemListElement']
                     for item_text in item_list:
-                        #item_text.url
-                        #item_text.description
-                        #item_text.name
-                        # Delay.
+
                         id = id +1
                         pid = id
                         if item_text['url'] in url_dictionary:
@@ -97,6 +113,7 @@ for language, url in urls.items():
                             continue
                         else:
                              url_dictionary[item_text['url']] = id
+
                         time.sleep(CONST_REQUEST_TIME_DELAY)
                         page_response = requests.get(item_text['url'], timeout=CONST_TIMEOUT)
                         page_content = BeautifulSoup(page_response.content,"html.parser")
@@ -117,31 +134,25 @@ for language, url in urls.items():
                                     data = separator.join(tokenizer.tokenize(data_text_2))
                                     if data not in buffer:
                                         buffer = '{0} {1}'.format(buffer, data)
+
                         logger.info("Create Subsection {0!r} -> {1!r}".format(item_text['name'],item_text['url']))
                         item_subSection = SubSecction(item_text['name'],item_text['url'],buffer,pid)
                         sub_content_secction.addSubSecction(subSecction=item_subSection)
 
-                        #if(item_text['url']== 'https://help.twitter.com/es/using-twitter/types-of-tweets'):
-                        #    print('w')
-
-                        # print(page_content.text.strip().replace('@', ''))
-                        #break
-                    # print(y)
-                    #break
             mainSecction_item.addSubSecction(subSecction = sub_content_secction)
-            #break
 
         sec.addSubSecction(subSecction=mainSecction_item)
-        #break
+
     main_subsection_list.append(sec)
 
-
-
+# --------------------------------------------------------------------------------
+# Guardamos los datos en español en un JSON 
 with open('es_data.json', 'a') as the_file:
     str_data = str(main_subsection_list[0]).replace("\\","")
     the_file.write(str_data)
 
-
+# --------------------------------------------------------------------------------
+# Guardamos los datos en inglés en un JSON
 with open('en_data.json', 'a') as the_file:
     str_data = str(main_subsection_list[0]).replace("\\","")
     the_file.write(str_data)
