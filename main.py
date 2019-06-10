@@ -33,11 +33,16 @@ logger.info("Start App")
 
 model =[]
 
-query_es = Query("es_data.json",logger, data_file='query_model_es.bin', load_model=True)
-#query_es.save('query_model_es.bin')
-
-query_en = Query("en_data.json",logger,language='english', data_file='query_model_en.bin', load_model=True)
-#query_en.save('query_model_en.bin')
+if os.path.exists('query_model_es.bin'):
+    query_es = Query("es_data.json",logger, data_file='query_model_es.bin', load_model=True)
+else:
+    query_es = Query("es_data.json",logger, data_file='query_model_es.bin', load_model=False)
+    query_es.save('query_model_es.bin')
+if os.path.exists('query_model_en.bin'):
+    query_en = Query("en_data.json",logger,language='english', data_file='query_model_en.bin', load_model=True)
+else:
+    query_en = Query("en_data.json",logger,language='english', data_file='query_model_en.bin', load_model=False)
+    query_en.save('query_model_en.bin')
 
 
 model.append(query_es)

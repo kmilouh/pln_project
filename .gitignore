@@ -108,3 +108,5 @@ venv.bak/
 
 # MAC
 .DS_Store
+query_model_e*
+
