@@ -1,4 +1,7 @@
 from json import dumps
+import anyjson
+import os
+import json
 
 class SubSecction(object):
     '''
@@ -42,3 +45,28 @@ class SubSecction(object):
             self.subSecction.append(sect)
     
 
+class DataIterator:
+    def __init__(self, jsonfile):
+        self.data = []
+        self.ids = []
+        self.num = 0
+        # Read JSON data into the datastore variable
+        if jsonfile:
+            with open(jsonfile, 'r') as f:
+                datastore = json.load(f)
+
+        sections = datastore['subSecction']
+
+        for section in sections:
+            self.save_data(section)
+    
+    def save_data(self,section):
+        if len(section['data']) > 0:
+            if not  section['id'] in self.ids:
+                self.ids.append( section['id'])
+                self.data.append((section['id'], section['url'],  section['data'] + ' ' + section['title']))
+
+        sections = section['subSecction']
+        if len(sections) > 0:
+            for _section in sections:
+                self.save_data(_section)

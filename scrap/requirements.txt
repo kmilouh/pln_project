@@ -2,3 +2,7 @@ beautifulsoup4
 requests
 anyjson
 nltk
+numpy 
+scipy
+
+
