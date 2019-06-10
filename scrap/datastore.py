@@ -48,7 +48,7 @@ class SubSecction(object):
 class DataIterator:
     def __init__(self, jsonfile):
         self.data = []
-        self.ids = []
+        self.ids = {}
         self.num = 0
         # Read JSON data into the datastore variable
         if jsonfile:
@@ -63,7 +63,7 @@ class DataIterator:
     def save_data(self,section):
         if len(section['data']) > 0:
             if not  section['id'] in self.ids:
-                self.ids.append( section['id'])
+                self.ids[section['id']] = section['url']
                 self.data.append((section['id'], section['url'],  section['data'] + ' ' + section['title']))
 
         sections = section['subSecction']

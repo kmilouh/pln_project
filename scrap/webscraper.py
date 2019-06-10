@@ -29,7 +29,7 @@ logger.info("Start App")
 
 # FAQ urls in different languages
 # Currently support: ES, EN
-urls = {'es': 'https://help.twitter.com/es',
+urls = {#'es': 'https://help.twitter.com/es',
         'en': 'https://help.twitter.com/'
        }
 languages = { 'es':'spanish', 'en': 'english'}
@@ -144,5 +144,5 @@ for language, url in urls.items():
 # TODO falta ejecutar para ingles.
 
 with open('en_data.json', 'a') as the_file:
-    str_data = str(main_subsection_list[1]).replace("\\","")
+    str_data = str(main_subsection_list[0]).replace("\\","")
     the_file.write(str_data)

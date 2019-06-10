@@ -15,21 +15,78 @@ from datastore import DataIterator
 from log_helper import LogHelper
 from query import Query
 import os
+from json import dumps
 from os import system, name
 import pickle
+from bottle import route, response, static_file, run, debug
+from pathlib import Path
 
+import nltk
+nltk.download("stopwords")
+nltk.download('punkt')
+nltk.data.load('nltk:tokenizers/punkt/spanish.pickle')
 
 # Logs
 loghelper = LogHelper()
 logger = loghelper.getLogger("default")
 logger.info("Start App")
 
-query = Query("es_data.json",logger, data_file='query_model_es.bin', load_model=False,)
-# query.save('query_model_es.bin')
+model =[]
+
+query_es = Query("es_data.json",logger, data_file='query_model_es.bin', load_model=True)
+#query_es.save('query_model_es.bin')
+
+query_en = Query("en_data.json",logger,language='english', data_file='query_model_en.bin', load_model=True)
+#query_en.save('query_model_en.bin')
+
+model.append(query_es)
+model.append(query_en)
+
+info = [{"name": "Modelo en Español", "value": "Modelo en Español, datos..."},
+        {"name": "Modelo en Ingles", "value": "Modelo en Ingles, datos Eng..."},
+         ]
 
 
-print(query.query("cosas judiciales"))
-print(query.query("requerimientos para información"))
-print(query.query("información del usuario"))
-print(query.query("enviar imágenes"))
+def runServer(httpPort=9000):
 
+    debug(True)
+    global logger
+
+    @route('/')
+    def send_static_index():
+        logger.info("Request index.html")
+        return static_file("index.html", root='./static/')
+
+    @route('/models')
+    def send_models():
+        return dumps(info, ensure_ascii=False).encode('utf8')
+
+    @route('/query/<modelbase>/<length>/<end>/<words>')
+    def send_autocomplete(modelbase, length, end, words):
+        response.content_type = 'application/json'
+        modelbase = int(modelbase)
+        end = int(end)
+
+        if modelbase < 0 or modelbase > len(model):
+            message_error = "ModelBase Number {0} not exist".format(modelbase)
+            logger.error(message_error)
+            ret = {"Error": message_error}
+            return dumps(ret, ensure_ascii=False).encode('utf8')
+        try:
+            wordList = words.split("$")
+            query_str = " ".join(wordList)
+            ret = model[modelbase].query(query_str)
+            return dumps({"items": ret}, ensure_ascii=False).encode('utf8')
+        except Exception as ex:
+            logger.exception("Exception: {0}".format(str(ex)))
+            ret = {"Error": str(ex)}
+            return dumps(ret, ensure_ascii=False).encode('utf8')
+
+    @route('/<filename:path>')
+    def send_static(filename):
+        logger.info("Request {0}".format(filename))
+        return static_file(filename, root='./static/')
+
+    run(host='localhost', port=httpPort)
+
+runServer()

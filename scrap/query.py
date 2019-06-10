@@ -18,19 +18,17 @@ class Query:
 
     def __init__(self, str_json_file, logger: LogHelper, language='spanish', data_file='query_model.bin', load_model=False):
         self.logger = logger
-        nltk.download("stopwords")
-        nltk.download('punkt')
-        nltk.data.load('nltk:tokenizers/punkt/spanish.pickle')
+
         if load_model:
             self.load(data_file)
             return
 
-        self.stopWords = stopwords.words('spanish')
-
         if language == 'spanish':
+            self.stopWords = stopwords.words('spanish')
             self.stemmer = SnowballStemmer('spanish')
         else:
             self.stemmer = PorterStemmer()
+            self.stopWords = stopwords.words('english')
 
         self.tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
 
@@ -186,11 +184,11 @@ class Query:
             if ans[0] in commondocs:
                 answer = []
                 # if doc has actual score, return score
-                answer.append((ans[0], wght[0]))
+                answer.append((self.iterator.ids[ans[0]], ans[0], wght[0]))
                 if len(ans) > 5:
                     for i in range(1, 5):
                         if ans[i] in commondocs:
-                            answer.append((ans[i], wght[i]))
+                            answer.append((self.iterator.ids[ans[i]],ans[i], wght[i]))
 
                 return answer
             else:
@@ -198,10 +196,10 @@ class Query:
                 # if upperbound score is greater, return fetch more
                 # return [("fetch more", 0)]
                 answer = []
-                answer.append((ans[0], wght[0]))
+                answer.append((self.iterator.ids[ans[0]],ans[0], wght[0]))
                 if len(ans) > 5:
                     for i in range(1, 5):
-                        answer.append((ans[i], wght[i]))
+                        answer.append((self.iterator.ids[ans[i]],ans[i], wght[i]))
                 return answer
 
         except UnboundLocalError:  # if none of the tokens are in vocabulary, return none
