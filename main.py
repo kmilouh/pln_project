@@ -39,6 +39,7 @@ query_es = Query("es_data.json",logger, data_file='query_model_es.bin', load_mod
 query_en = Query("en_data.json",logger,language='english', data_file='query_model_en.bin', load_model=True)
 #query_en.save('query_model_en.bin')
 
+
 model.append(query_es)
 model.append(query_en)
 

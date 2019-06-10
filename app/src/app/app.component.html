@@ -20,18 +20,6 @@
                 </div>
               </fieldset>
             </div>
-            <!--
-              <div class="col">
-              <fieldset id="list_name_size">
-                <legend>Size of the response array</legend>
-                <div class="list-group-item" *ngFor="let item of size_itemList">
-                  <input type="radio" [(ngModel)]="size_radioSelected" name="list_name_size" value="{{item.value}}" />
-                  {{item.name}}
-                </div>
-              </fieldset>
-            </div>
-
-            -->
 
           </div>
         </div>
@@ -85,8 +73,7 @@
         </div>
         <div>
           <div *ngFor="let client of messages">
-            <li (click)="onselectUrl(client)">({{client[2]}}) {{client[0]}} </li>
-            <!--<span class="badge badge-secondary">{{client[0]}}-  </span> -->
+            <li (click)="onselectUrl(client)"> <span class="badge badge-secondary">({{client[2]}})</span> {{client[3]}} </li>
           </div>
         </div>
       </div>
@@ -97,7 +84,6 @@
   </div>
   <div class="row">
     <div class="col">
-      <!-- {{language_radioSelected}} -> {{size_radioSelected}} -->
 
     </div>
   </div>

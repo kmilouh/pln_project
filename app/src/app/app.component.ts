@@ -14,7 +14,7 @@ export class AppComponent {
 
   @ViewChild('inputBox') input: ElementRef;
 
-  title = 'Final Project< App.';
+  title = 'Final Project App.';
   author = 'Camilo A. Monreal,Manuel Perez Jimenez,Pablo Bergmann Guerra';
   mail = 'kmilouh@gmail.com;manuperezj@gmail.com;bergmann.pablo@gmail.com';
   messages: Observable<string[]>;

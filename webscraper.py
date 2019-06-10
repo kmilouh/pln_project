@@ -136,12 +136,11 @@ for language, url in urls.items():
     main_subsection_list.append(sec)
 
 
-#print(main_subsection_list)
-#with open('es_data.json', 'a') as the_file:
-#    str_data = str(main_subsection_list[0]).replace("\\","")
-#    the_file.write(str_data)
 
-# TODO falta ejecutar para ingles.
+with open('es_data.json', 'a') as the_file:
+    str_data = str(main_subsection_list[0]).replace("\\","")
+    the_file.write(str_data)
+
 
 with open('en_data.json', 'a') as the_file:
     str_data = str(main_subsection_list[0]).replace("\\","")

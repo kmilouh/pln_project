@@ -152,7 +152,7 @@ class Query:
                 loc_docs[token], weights = zip(
                     *self.postings_list[token].most_common())
             else:
-                # taking top 10 in postings list
+                # taking top 50 in postings list
                 loc_docs[token], weights = zip(
                     *self.postings_list[token].most_common(50))
             tenth[token] = weights[-1]  # storing the upper bound of each token
@@ -184,11 +184,11 @@ class Query:
             if ans[0] in commondocs:
                 answer = []
                 # if doc has actual score, return score
-                answer.append((self.iterator.ids[ans[0]], ans[0], wght[0]))
+                answer.append((self.iterator.ids[ans[0]], ans[0], wght[0], self.iterator.title[ans[0]]))
                 if len(ans) > 5:
                     for i in range(1, 5):
                         if ans[i] in commondocs:
-                            answer.append((self.iterator.ids[ans[i]],ans[i], wght[i]))
+                            answer.append((self.iterator.ids[ans[i]],ans[i], wght[i],self.iterator.title[ans[i]]))
 
                 return answer
             else:
@@ -196,10 +196,10 @@ class Query:
                 # if upperbound score is greater, return fetch more
                 # return [("fetch more", 0)]
                 answer = []
-                answer.append((self.iterator.ids[ans[0]],ans[0], wght[0]))
+                answer.append((self.iterator.ids[ans[0]],ans[0], wght[0],self.iterator.title[ans[0]]))
                 if len(ans) > 5:
                     for i in range(1, 5):
-                        answer.append((self.iterator.ids[ans[i]],ans[i], wght[i]))
+                        answer.append((self.iterator.ids[ans[i]],ans[i], wght[i],self.iterator.title[ans[i]]))
                 return answer
 
         except UnboundLocalError:  # if none of the tokens are in vocabulary, return none
